@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CT-Planner - Exam Seating & Scheduling</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --shadow-lg: rgba(0, 0, 0, 0.15);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+        }
+
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-dark: #6366f1;
+            --primary-light: #a5b4fc;
+            --secondary: #f472b6;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #64748b;
+            --border: #334155;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --shadow-lg: rgba(0, 0, 0, 0.5);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+        }
+
+        .bg-animation::before,
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-animation::before {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            top: -250px;
+            left: -250px;
+        }
+
+        .bg-animation::after {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -200px;
+            right: -200px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(100px, -100px) scale(1.1); }
+            66% { transform: translate(-100px, 100px) scale(0.9); }
+        }
+
+        /* Header */
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 100%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.3rem;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 0.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .tab.active::before {
+            opacity: 1;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px var(--shadow);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* List Items */
+        .list-item {
+            background: var(--bg-primary);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .list-item:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+
+        .list-item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .list-item-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--bg-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th,
+        table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        table tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .info-box p {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Radio Group */
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .radio-group input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .radio-group label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .header-content {
+                padding: 0 1rem;
+            }
+
+            .brand-text h1 {
+                font-size: 1.25rem;
+            }
+
+            .tabs-container {
+                flex-direction: column;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-section {
+            background: var(--bg-primary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .result-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .inline-inputs {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .shift-input {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .manual-dates-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 2px solid var(--border);
+        }
+
+        .manual-dates-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .manual-dates-container::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .manual-dates-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">CT</div>
+                <div class="brand-text">
+                    <h1>CT-Planner</h1>
+                    <p>AI-POWERED EXAM MANAGEMENT</p>
+                </div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+                🌙
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <button class="tab active" onclick="switchTab('basic')">
+                📚 Basic Setup
+            </button>
+            <button class="tab" onclick="switchTab('advanced')">
+                🎯 Advanced Scheduling
+            </button>
+        </div>
+
+        <!-- Basic Setup Tab -->
+        <div id="basic-tab" class="tab-content">
+            <!-- Classes Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📚</div>
+                    <h2 class="card-title">Classes Configuration</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Class Name</label>
+                    <input type="text" id="className" class="form-input" placeholder="e.g., CSE-A">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Start Roll No</label>
+                        <input type="number" id="startRoll" class="form-input" placeholder="e.g., 1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Roll No</label>
+                        <input type="number" id="endRoll" class="form-input" placeholder="e.g., 60">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">TC Students (comma separated)</label>
+                        <input type="text" id="tcStudents" class="form-input" placeholder="e.g., 5, 12, 23">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">LEET Students (comma separated)</label>
+                        <input type="text" id="leetStudents" class="form-input" placeholder="e.g., 101, 102">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addClass()">
+                    ➕ Add Class
+                </button>
+
+                <div id="classList" class="mt-2"></div>
+            </div>
+
+            <!-- Halls Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🏛️</div>
+                    <h2 class="card-title">Examination Halls</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Hall Name</label>
+                    <input type="text" id="hallName" class="form-input" placeholder="e.g., Main Hall">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Rows</label>
+                        <input type="number" id="hallRows" class="form-input" placeholder="e.g., 10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Columns</label>
+                        <input type="number" id="hallColumns" class="form-input" placeholder="e.g., 8">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Students per Desk</label>
+                        <input type="number" id="studentsPerDesk" class="form-input" placeholder="e.g., 2">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addHall()">
+                    ➕ Add Hall
+                </button>
+
+                <div id="hallList" class="mt-2"></div>
+            </div>
+
+            <!-- Generate Seating Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🎯</div>
+                    <h2 class="card-title">Generate Seating Arrangement</h2>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="generateSeating()">
+                        🚀 Generate Seating
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadPDF()">
+                        📥 Download PDF
+                    </button>
+                </div>
+
+                <div id="seatingResult"></div>
+            </div>
+        </div>
+
+        <!-- Advanced Scheduling Tab -->
+        <div id="advanced-tab" class="tab-content hidden">
+            <!-- Teachers Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">👨‍🏫</div>
+                    <h2 class="card-title">Teachers / Invigilators</h2>
+                </div>
+
+                <div class="inline-inputs">
+                    <div class="form-group">
+                        <label class="form-label">Teacher Name</label>
+                        <input type="text" id="teacherName" class="form-input" placeholder="e.g., Dr. Smith">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Subject</label>
+                        <input type="text" id="teacherSubject" class="form-input" placeholder="e.g., Mathematics">
+                    </div>
+                    <button class="btn btn-primary" onclick="addTeacher()">➕ Add</button>
+                </div>
+
+                <div id="teacherList"></div>
+            </div>
+
+            <!-- Class Subjects Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📖</div>
+                    <h2 class="card-title">Class Subjects</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select Class</label>
+                    <select id="subjectClassName" class="form-select"></select>
+                </div>
+
+                <div class="inline-inputs">
+                    <div class="form-group">
+                        <label class="form-label">Subject Name</label>
+                        <input type="text" id="subjectName" class="form-input" placeholder="e.g., Mathematics">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Difficulty (1-5)</label>
+                        <input type="number" id="subjectDifficulty" class="form-input" min="1" max="5" value="3">
+                    </div>
+                    <button class="btn btn-primary" onclick="addSubjectToClass()">➕ Add</button>
+                </div>
+
+                <div id="classSubjectsList"></div>
+            </div>
+
+            <!-- Exam Schedule Config Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">⏰</div>
+                    <h2 class="card-title">Exam Schedule Configuration</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Number of Exams Per Day</label>
+                    <select id="examsPerDay" class="form-select" onchange="updateShiftInfo()">
+                        <option value="1">1 Exam Per Day (Morning Only)</option>
+                        <option value="2">2 Exams Per Day (Morning & Evening)</option>
+                    </select>
+                </div>
+
+                <div class="info-box" id="shiftInfo">
+                    <p>✓ With 1 exam per day, all exams will be scheduled in the Morning shift.</p>
+                </div>
+            </div>
+
+            <!-- Date Configuration Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📅</div>
+                    <h2 class="card-title">Exam Date Configuration</h2>
+                </div>
+
+                <div class="radio-group">
+                    <input type="radio" id="autoDate" name="dateMode" value="auto" checked onchange="toggleDateMode()">
+                    <label for="autoDate">Auto-Generate Dates</label>
+                </div>
+
+                <div class="radio-group">
+                    <input type="radio" id="manualDate" name="dateMode" value="manual" onchange="toggleDateMode()">
+                    <label for="manualDate">Enter Dates Manually</label>
+                </div>
+
+                <div id="autoDateSection">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" id="examStartDate" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Date</label>
+                            <input type="date" id="examEndDate" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="manualDateSection" class="hidden">
+                    <button class="btn btn-secondary" onclick="generateManualDateInputs()">
+                        📋 Generate Date Input Fields
+                    </button>
+                    <div id="manualDatesContainer" class="manual-dates-container mt-2"></div>
+                </div>
+            </div>
+
+            <!-- Invigilator Config Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">👥</div>
+                    <h2 class="card-title">Invigilator Configuration</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Invigilators per Hall</label>
+                    <input type="number" id="invigilatorsPerHall" class="form-input" min="1" max="10" value="2">
+                </div>
+
+                <div class="info-box">
+                    <p>💡 Note: Each teacher will be assigned to only ONE hall at a time to avoid conflicts.</p>
+                </div>
+            </div>
+
+            <!-- Generate Schedule Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🎯</div>
+                    <h2 class="card-title">Generate Complete Exam Schedule</h2>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="generateExamSchedule()">
+                        🚀 Generate Complete Schedule
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadExamSchedulePDF()">
+                        📥 Download Complete PDF
+                    </button>
+                </div>
+
+                <div id="examScheduleResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data storage
+        let classes = [];
+        let halls = [];
+        let teachers = [];
+        let classSubjects = [];
+        let currentArrangement = null;
+        let currentExamSchedule = null;
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = html.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                html.removeAttribute('data-theme');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.getElementById('themeToggle');
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            }
+        });
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+        }
+
+        // Update shift information
+        function updateShiftInfo() {
+            const examsPerDay = parseInt(document.getElementById('examsPerDay').value);
+            const infoBox = document.getElementById('shiftInfo');
+            
+            if (examsPerDay === 1) {
+                infoBox.innerHTML = '<p>✓ With 1 exam per day, all exams will be scheduled in the Morning shift.</p>';
+            } else {
+                infoBox.innerHTML = '<p>✓ With 2 exams per day, exams will be scheduled in Morning and Evening shifts.</p>';
+            }
+        }
+
+        // Class Management
+        function addClass() {
+            const className = document.getElementById('className').value.trim();
+            const startRoll = parseInt(document.getElementById('startRoll').value);
+            const endRoll = parseInt(document.getElementById('endRoll').value);
+            const tcStudents = document.getElementById('tcStudents').value.trim();
+            const leetStudents = document.getElementById('leetStudents').value.trim();
+
+            if (!className || isNaN(startRoll) || isNaN(endRoll)) {
+                alert('Please fill all class fields correctly!');
+                return;
+            }
+
+            if (startRoll > endRoll) {
+                alert('Start roll must be less than or equal to end roll!');
+                return;
+            }
+
+            const classData = {
+                name: className,
+                start_roll: startRoll,
+                end_roll: endRoll,
+                tc: tcStudents,
+                leet: leetStudents
+            };
+
+            classes.push(classData);
+            updateClassList();
+            updateSubjectClassDropdown();
+            
+            document.getElementById('className').value = '';
+            document.getElementById('startRoll').value = '';
+            document.getElementById('endRoll').value = '';
+            document.getElementById('tcStudents').value = '';
+            document.getElementById('leetStudents').value = '';
+        }
+
+        function removeClass(index) {
+            classes.splice(index, 1);
+            updateClassList();
+            updateSubjectClassDropdown();
+        }
+
+        function updateClassList() {
+            const list = document.getElementById('classList');
+            list.innerHTML = '';
+            
+            classes.forEach((cls, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="list-item-title">${cls.name}</div>
+                        <div class="list-item-meta">
+                            Rolls: ${cls.start_roll} to ${cls.end_roll}
+                            ${cls.tc ? ` | TC: ${cls.tc}` : ''}
+                            ${cls.leet ? ` | LEET: ${cls.leet}` : ''}
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" onclick="removeClass(${index})">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Hall Management
+        function addHall() {
+            const hallName = document.getElementById('hallName').value.trim();
+            const rows = parseInt(document.getElementById('hallRows').value);
+            const columns = parseInt(document.getElementById('hallColumns').value);
+            const studentsPerDesk = parseInt(document.getElementById('studentsPerDesk').value);
+
+            if (!hallName || isNaN(rows) || isNaN(columns) || isNaN(studentsPerDesk)) {
+                alert('Please fill all hall fields correctly!');
+                return;
+            }
+
+            const hallData = {
+                name: hallName,
+                rows: rows,
+                columns: columns,
+                students_per_desk: studentsPerDesk
+            };
+
+            halls.push(hallData);
+            updateHallList();
+            
+            document.getElementById('hallName').value = '';
+            document.getElementById('hallRows').value = '';
+            document.getElementById('hallColumns').value = '';
+            document.getElementById('studentsPerDesk').value = '';
+        }
+
+        function removeHall(index) {
+            halls.splice(index, 1);
+            updateHallList();
+        }
+
+        function updateHallList() {
+            const list = document.getElementById('hallList');
+            list.innerHTML = '';
+            
+            halls.forEach((hall, index) => {
+                const capacity = hall.rows * hall.columns * hall.students_per_desk;
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="list-item-title">${hall.name}</div>
+                        <div class="list-item-meta">
+                            ${hall.rows}×${hall.columns} (${hall.students_per_desk} per desk) | Capacity: ${capacity}
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" onclick="removeHall(${index})">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Teacher Management
+        function addTeacher() {
+            const name = document.getElementById('teacherName').value.trim();
+            const subject = document.getElementById('teacherSubject').value.trim();
+
+            if (!name || !subject) {
+                alert('Please fill teacher name and subject!');
+                return;
+            }
+
+            teachers.push({ name, subject });
+            updateTeacherList();
+            
+            document.getElementById('teacherName').value = '';
+            document.getElementById('teacherSubject').value = '';
+        }
+
+        function removeTeacher(index) {
+            teachers.splice(index, 1);
+            updateTeacherList();
+        }
+
+        function updateTeacherList() {
+            const list = document.getElementById('teacherList');
+            list.innerHTML = '';
+            
+            teachers.forEach((teacher, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="list-item-title">${teacher.name}</div>
+                        <div class="list-item-meta">${teacher.subject}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="removeTeacher(${index})">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Class Subjects Management
+        function updateSubjectClassDropdown() {
+            const dropdown = document.getElementById('subjectClassName');
+            dropdown.innerHTML = '<option value="">Select a class...</option>';
+            
+            classes.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls.name;
+                option.textContent = cls.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        function addSubjectToClass() {
+            const className = document.getElementById('subjectClassName').value;
+            const subjectName = document.getElementById('subjectName').value.trim();
+            const difficulty = parseInt(document.getElementById('subjectDifficulty').value);
+
+            if (!className || !subjectName) {
+                alert('Please select a class and enter subject name!');
+                return;
+            }
+
+            let classSubject = classSubjects.find(cs => cs.class_name === className);
+            if (!classSubject) {
+                classSubject = { class_name: className, subjects: [] };
+                classSubjects.push(classSubject);
+            }
+
+            classSubject.subjects.push({ name: subjectName, difficulty });
+            updateClassSubjectsList();
+            
+            document.getElementById('subjectName').value = '';
+            document.getElementById('subjectDifficulty').value = '3';
+        }
+
+        function removeSubject(className, subjectIndex) {
+            const classSubject = classSubjects.find(cs => cs.class_name === className);
+            if (classSubject) {
+                classSubject.subjects.splice(subjectIndex, 1);
+                if (classSubject.subjects.length === 0) {
+                    classSubjects = classSubjects.filter(cs => cs.class_name !== className);
+                }
+                updateClassSubjectsList();
+            }
+        }
+
+        function updateClassSubjectsList() {
+            const list = document.getElementById('classSubjectsList');
+            list.innerHTML = '';
+            
+            classSubjects.forEach(cs => {
+                const classDiv = document.createElement('div');
+                classDiv.style.marginTop = '20px';
+                classDiv.innerHTML = `<h3 style="color: var(--primary); margin-bottom: 10px; font-size: 1.1rem;">${cs.class_name}</h3>`;
+                
+                cs.subjects.forEach((subject, index) => {
+                    const stars = '★'.repeat(subject.difficulty);
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <div class="list-item-content">
+                            <div class="list-item-title">${subject.name}</div>
+                            <div class="list-item-meta" style="color: var(--warning);">${stars}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeSubject('${cs.class_name}', ${index})">Remove</button>
+                    `;
+                    classDiv.appendChild(item);
+                });
+                
+                list.appendChild(classDiv);
+            });
+        }
+
+        // Date Mode Toggle
+        function toggleDateMode() {
+            const autoDate = document.getElementById('autoDate').checked;
+            document.getElementById('autoDateSection').classList.toggle('hidden', !autoDate);
+            document.getElementById('manualDateSection').classList.toggle('hidden', autoDate);
+        }
+
+        function generateManualDateInputs() {
+            const container = document.getElementById('manualDatesContainer');
+            const examsPerDay = parseInt(document.getElementById('examsPerDay').value);
+            
+            container.innerHTML = '<h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.1rem;">Enter Exam Dates for Each Subject</h3>';
+            
+            if (examsPerDay === 2) {
+                container.innerHTML += '<div class="info-box"><p>💡 Select shift for each exam: Morning or Evening</p></div>';
+            }
+            
+            classSubjects.forEach(cs => {
+                const classDiv = document.createElement('div');
+                classDiv.style.marginBottom = '20px';
+                classDiv.innerHTML = `<h4 style="color: var(--secondary); margin-bottom: 10px; font-size: 1rem;">${cs.class_name}</h4>`;
+                
+                cs.subjects.forEach(subject => {
+                    const dateInput = document.createElement('div');
+                    dateInput.className = 'form-group';
+                    
+                    if (examsPerDay === 2) {
+                        dateInput.innerHTML = `
+                            <label class="form-label">${subject.name}:</label>
+                            <div class="shift-input">
+                                <input type="date" class="form-input manual-date-input" data-class="${cs.class_name}" data-subject="${subject.name}">
+                                <select class="form-select manual-shift-input" data-class="${cs.class_name}" data-subject="${subject.name}">
+                                    <option value="Morning">Morning</option>
+                                    <option value="Evening">Evening</option>
+                                </select>
+                            </div>
+                        `;
+                    } else {
+                        dateInput.innerHTML = `
+                            <label class="form-label">${subject.name}:</label>
+                            <input type="date" class="form-input manual-date-input" data-class="${cs.class_name}" data-subject="${subject.name}">
+                        `;
+                    }
+                    classDiv.appendChild(dateInput);
+                });
+                
+                container.appendChild(classDiv);
+            });
+        }
+
+        // Generate Seating
+        async function generateSeating() {
+            if (classes.length === 0 || halls.length === 0) {
+                alert('Please add at least one class and one hall!');
+                return;
+            }
+
+            const resultDiv = document.getElementById('seatingResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Generating seating arrangement...</p></div>';
+
+            try {
+                const response = await fetch('/generate_seating', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ classes, halls })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="alert alert-error"><strong>Error:</strong> ${data.error}</div>`;
+                    return;
+                }
+
+                currentArrangement = data;
+                displaySeatingResult(data);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-error"><strong>Error:</strong> ${error.message}</div>`;
+            }
+        }
+
+        function displaySeatingResult(data) {
+            const resultDiv = document.getElementById('seatingResult');
+            let html = '<div class="alert alert-success">✅ Seating arrangement generated successfully!</div>';
+            
+            html += '<div class="result-section">';
+            html += '<h3>Summary</h3>';
+            html += `<p><strong>Total Students:</strong> ${data.summary.total_students}</p>`;
+            html += `<p><strong>Total Capacity:</strong> ${data.summary.total_capacity}</p>`;
+            html += `<p><strong>Halls Used:</strong> ${data.summary.halls_used}</p>`;
+            html += '</div>';
+
+            data.halls.forEach(hall => {
+                html += '<div class="result-section">';
+                html += `<h3>${hall.name}</h3>`;
+                html += `<p><strong>Capacity:</strong> ${hall.capacity} | <strong>Occupied:</strong> ${hall.occupied}</p>`;
+                html += '<div class="table-container"><table><thead><tr><th>Position</th>';
+                
+                for (let c = 0; c < hall.columns; c++) {
+                    html += `<th>Col ${c + 1}</th>`;
+                }
+                html += '</tr></thead><tbody>';
+                
+                for (let r = 0; r < hall.rows; r++) {
+                    html += `<tr><td><strong>Row ${r + 1}</strong></td>`;
+                    for (let c = 0; c < hall.columns; c++) {
+                        const desk = hall.seating[r][c];
+                        let cellContent = desk.map(s => s ? `${s.roll_no} (${s.class_name})${s.is_leet ? ' [LEET]' : ''}` : 'Empty').join(' | ');
+                        html += `<td>${cellContent}</td>`;
+                    }
+                    html += '</tr>';
+                }
+                
+                html += '</tbody></table></div></div>';
+            });
+
+            resultDiv.innerHTML = html;
+        }
+
+        async function downloadPDF() {
+            if (!currentArrangement) {
+                alert('Please generate seating arrangement first!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/download_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ arrangement: currentArrangement })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'seating_arrangement.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                alert('PDF downloaded successfully!');
+            } catch (error) {
+                alert('Error downloading PDF: ' + error.message);
+            }
+        }
+
+        // Generate Exam Schedule
+        async function generateExamSchedule() {
+            if (classes.length === 0 || halls.length === 0 || teachers.length === 0 || classSubjects.length === 0) {
+                alert('Please complete all configurations!');
+                return;
+            }
+
+            const dateMode = document.getElementById('autoDate').checked ? 'auto' : 'manual';
+            const examsPerDay = parseInt(document.getElementById('examsPerDay').value);
+            let manualDates = {};
+            let startDate = '';
+            let endDate = '';
+            
+            if (dateMode === 'manual') {
+                const dateInputs = document.querySelectorAll('.manual-date-input');
+                if (dateInputs.length === 0) {
+                    alert('Please click "Generate Date Input Fields" first!');
+                    return;
+                }
+                
+                dateInputs.forEach(input => {
+                    const className = input.dataset.class;
+                    const subject = input.dataset.subject;
+                    const date = input.value;
+                    
+                    if (date) {
+                        let shift = 'Morning';
+                        
+                        if (examsPerDay === 2) {
+                            const shiftInput = document.querySelector(`.manual-shift-input[data-class="${className}"][data-subject="${subject}"]`);
+                            if (shiftInput) {
+                                shift = shiftInput.value;
+                            }
+                        }
+                        
+                        manualDates[`${className}_${subject}`] = {
+                            date: date,
+                            shift: shift
+                        };
+                    }
+                });
+            } else {
+                startDate = document.getElementById('examStartDate').value;
+                endDate = document.getElementById('examEndDate').value;
+                
+                if (!startDate || !endDate) {
+                    alert('Please select start and end dates!');
+                    return;
+                }
+            }
+
+            const invigilatorsPerHall = parseInt(document.getElementById('invigilatorsPerHall').value) || 2;
+
+            const resultDiv = document.getElementById('examScheduleResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Generating complete exam schedule...</p></div>';
+
+            try {
+                const response = await fetch('/generate_exam_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        classes,
+                        halls,
+                        teachers,
+                        class_subjects: classSubjects,
+                        date_mode: dateMode,
+                        manual_dates: manualDates,
+                        start_date: startDate,
+                        end_date: endDate,
+                        exams_per_day: examsPerDay,
+                        invigilators_per_hall: invigilatorsPerHall
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="alert alert-error"><strong>Error:</strong> ${data.error}</div>`;
+                    return;
+                }
+
+                currentExamSchedule = data;
+                displayExamScheduleResult(data);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-error"><strong>Error:</strong> ${error.message}</div>`;
+            }
+        }
+
+        function displayExamScheduleResult(data) {
+            const resultDiv = document.getElementById('examScheduleResult');
+            let html = '<div class="alert alert-success">✅ Exam schedule generated successfully!</div>';
+            
+            html += '<div class="result-section">';
+            html += '<h3>📊 Schedule Summary</h3>';
+            html += `<p><strong>Total Exams:</strong> ${data.summary.total_exams}</p>`;
+            html += `<p><strong>Total Days:</strong> ${data.summary.total_days}</p>`;
+            html += `<p><strong>Halls Used:</strong> ${data.summary.halls_used}</p>`;
+            html += `<p><strong>Teachers Assigned:</strong> ${data.summary.teachers_assigned}</p>`;
+            html += '</div>';
+
+            const examsBySlot = {};
+            data.exam_schedule.forEach(exam => {
+                const slotKey = `${exam.date}_${exam.shift}`;
+                if (!examsBySlot[slotKey]) {
+                    examsBySlot[slotKey] = [];
+                }
+                examsBySlot[slotKey].push(exam);
+            });
+
+            html += '<div class="result-section">';
+            html += '<h3>📅 Examination Datesheet</h3>';
+            html += '<div class="table-container"><table>';
+            html += '<thead><tr><th>Date</th><th>Shift</th><th>Class</th><th>Subject</th><th>Hall</th><th>Difficulty</th><th>Invigilators</th></tr></thead>';
+            html += '<tbody>';
+
+            Object.keys(examsBySlot).sort().forEach(slotKey => {
+                examsBySlot[slotKey].forEach(exam => {
+                    const stars = '★'.repeat(exam.difficulty);
+                    const invigilators = exam.invigilators.join(', ');
+                    html += `<tr>
+                        <td><strong>${exam.date}</strong></td>
+                        <td><strong>${exam.shift}</strong></td>
+                        <td>${exam.class_name}</td>
+                        <td>${exam.subject_name}</td>
+                        <td>${exam.hall_name}</td>
+                        <td style="color: var(--warning);">${stars}</td>
+                        <td>${invigilators}</td>
+                    </tr>`;
+                });
+            });
+
+            html += '</tbody></table></div></div>';
+
+            resultDiv.innerHTML = html;
+        }
+
+        async function downloadExamSchedulePDF() {
+            if (!currentExamSchedule) {
+                alert('Please generate exam schedule first!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/download_exam_schedule_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exam_schedule: currentExamSchedule })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'exam_schedule_complete.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                alert('Exam schedule PDF downloaded successfully!');
+            } catch (error) {
+                alert('Error downloading PDF: ' + error.message);
+            }
+        }
+
+        // Initialize
+        window.onload = function() {
+            updateSubjectClassDropdown();
+            toggleDateMode();
+            updateShiftInfo();
+            
+            const today = new Date();
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + 30);
+            
+            document.getElementById('examStartDate').valueAsDate = today;
+            document.getElementById('examEndDate').valueAsDate = endDate;
+        };
+    </script>
+</body>
+</html>
