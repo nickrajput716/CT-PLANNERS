@@ -130,8 +130,8 @@ ct-planner/
 ├── app.py                  # Flask application entry point
 ├── seating_model.py        # Core seating & scheduling algorithms
 ├── requirements.txt        # Python dependencies
-├── runtime.txt        # Python dependencies
-├── README.md              # Project documentation
+├── runtime.txt             # Python dependencies
+├── README.md               # Project documentation
 │
 ├── templates/
 │   └── index.html         # Main HTML interface
@@ -372,7 +372,7 @@ Live Application: `https://ct-planners-8.onrender.com/`
 ## 📞 Contact & Support
 
 - **Email**: nickrajput716@gmail.com
-- **GitHub Issues**: [Create an issue](https://github.com/nickrajput716)
+- ** GitHub Issues**: [Create an issue](https://github.com/nickrajput716)
 
 ---
 
@@ -390,3 +390,4 @@ If you found this project helpful, please consider giving it a ⭐ on GitHub!
 
 
 </div>
+
