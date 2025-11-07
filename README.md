@@ -114,11 +114,12 @@ Git
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/your-username/ct-planner.git
+git clone https://github.com/nickrajput716/CT-PLANNERS.git
 ```
 
 ### Install Dependencies
 ```bash
+cd seating-planner
 pip install -r requirements.txt
 ```
 
@@ -129,6 +130,7 @@ ct-planner/
 ├── app.py                  # Flask application entry point
 ├── seating_model.py        # Core seating & scheduling algorithms
 ├── requirements.txt        # Python dependencies
+├── runtime.txt        # Python dependencies
 ├── README.md              # Project documentation
 │
 ├── templates/
@@ -141,11 +143,10 @@ ct-planner/
 
 ### Run Locally
 ```bash
-cd seating-planner
 python app.py
 ```
 
-The application will start on `http://localhost:5000`
+The application will start on `http://localhost:500`
 
 ---
 
@@ -337,7 +338,7 @@ The application will start on `http://localhost:5000`
 
 ## 🚀 Deployed on Render
 
-Live Application: `https://your-app-name.onrender.com`
+Live Application: `https://ct-planners-8.onrender.com/`
 
 ---
 
@@ -368,28 +369,10 @@ Live Application: `https://your-app-name.onrender.com`
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 📞 Contact & Support
 
 - **Email**: nickrajput716@gmail.com
-- **GitHub Issues**: [Create an issue](https://github.com/your-username/ct-planner/issues)
+- **GitHub Issues**: [Create an issue](https://github.com/nickrajput716)
 
 ---
 
@@ -404,5 +387,6 @@ If you found this project helpful, please consider giving it a ⭐ on GitHub!
 **Made with ❤️ by Cobra Tech**
 
 *Simplifying Examination Management, One Schedule at a Time*
+
 
 </div>
